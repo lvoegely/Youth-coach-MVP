@@ -1,0 +1,369 @@
+// Generators updated for 'very-simple' complexity and 4U–12U
+function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+function choice(a){return a[randInt(0,a.length-1)];}
+
+const canvas = document.getElementById('board');
+const ctx = canvas.getContext('2d');
+const playNameEl = document.getElementById('playName');
+const cueEl = document.getElementById('coachingCue');
+const quoteEl = document.getElementById('quote');
+const quoteAuthorEl = document.getElementById('quoteAuthor');
+const tipsEl = document.getElementById('tips');
+const practicePlanEl = document.getElementById('practicePlan');
+
+function clearBoard() {
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(0,0,canvas.width, canvas.height);
+  // Field/Court markings simplified
+  ctx.strokeStyle = '#1f2937';
+  ctx.lineWidth = 2;
+  for (let i=50;i<canvas.width;i+=100){
+    ctx.beginPath(); ctx.moveTo(i,20); ctx.lineTo(i,580); ctx.stroke();
+  }
+  ctx.beginPath(); ctx.moveTo(20,50); ctx.lineTo(980,50); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(20,550); ctx.lineTo(980,550); ctx.stroke();
+}
+
+function drawPlayer(x,y,color,label){
+  ctx.fillStyle=color;
+  ctx.beginPath(); ctx.arc(x,y,10,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#e2e8f0';
+  ctx.font='12px system-ui';
+  ctx.fillText(label, x-8, y-14);
+}
+
+function drawArrow(x1,y1,x2,y2,color,dashed=false){
+  ctx.strokeStyle=color; ctx.lineWidth=3;
+  if(dashed){ctx.setLineDash([8,6]);} else {ctx.setLineDash([]);}
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  // arrow head
+  const angle = Math.atan2(y2-y1,x2-x1);
+  const len = 10;
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-len*Math.cos(angle-Math.PI/6), y2-len*Math.sin(angle-Math.PI/6));
+  ctx.lineTo(x2-len*Math.cos(angle+Math.PI/6), y2-len*Math.sin(angle+Math.PI/6));
+  ctx.closePath(); ctx.fillStyle=color; ctx.fill();
+  ctx.setLineDash([]);
+}
+
+function cueByComplexity(complexity){
+  const cues = {
+    'very-simple':'One job only. Show, then go. Praise effort!',
+    'simple':'One hard cut, eyes up, quick pass or shot.',
+    'standard':'Sell the route stem; read the defender; hit first window.',
+    'advanced':'Attack leverage and spacing; pass on time before the break.'
+  };
+  return cues[complexity] || cues['simple'];
+}
+
+// Generators
+function genFootball(age,complexity){
+  clearBoard();
+  const baseY = 450; // offense lower
+  const offense = [
+    {x:350,y:baseY,label:'WRL'},{x:500,y:baseY,label:'QB'},{x:650,y:baseY,label:'WRR'},{x:500,y:500,label:'RB'}
+  ];
+  const defense = [
+    {x:350,y:200,label:'CBL'},{x:500,y:200,label:'S'},{x:650,y:200,label:'CBR'}
+  ];
+  offense.forEach(p=>drawPlayer(p.x,p.y,'#22c55e',p.label));
+  defense.forEach(p=>drawPlayer(p.x,p.y,'#ef4444',p.label));
+
+  const names = ['Jet Sweep','Double Slant','Flood Right','Center Drag','Quick Out','Trips Left'];
+  const name = (complexity==='very-simple') ? 'Sweep Right' : choice(names);
+  playNameEl.textContent = `Flag: ${name}`;
+  cueEl.textContent = cueByComplexity(complexity);
+
+  // routes (simplified for very-simple)
+  if(complexity==='very-simple'){
+    drawArrow(500,500,620,500,'#60a5fa');     // RB sweep
+    drawArrow(500,450,520,470,'#f59e0b',true); // QB pitch path
+  } else {
+    const wrLeftEnd = (name==='Double Slant'||name==='Center Drag') ? {x:420,y:350} : {x:350,y:250};
+    drawArrow(350,baseY, wrLeftEnd.x, wrLeftEnd.y, '#60a5fa');
+    const wrRightEnd = (name==='Quick Out'||name==='Flood Right') ? {x:720,y:360} : {x:700,y:270};
+    drawArrow(650,baseY, wrRightEnd.x, wrRightEnd.y, '#60a5fa');
+    const rbEnd = (name==='Flood Right') ? {x:560,y:420} : {x:440,y:420};
+    drawArrow(500,500, rbEnd.x, rbEnd.y, '#60a5fa', true);
+    drawArrow(500,baseY, wrLeftEnd.x, wrLeftEnd.y, '#f59e0b', true);
+  }
+}
+
+function genBasketball(age,complexity){
+  clearBoard();
+  const O=[{x:300,y:450,l:'1'},{x:450,y:520,l:'2'},{x:600,y:450,l:'3'},{x:350,y:360,l:'4'},{x:650,y:360,l:'5'}];
+  const D=[{x:300,y:300,l:'x1'},{x:450,y:360,l:'x2'},{x:600,y:300,l:'x3'},{x:350,y:260,l:'x4'},{x:650,y:260,l:'x5'}];
+  O.forEach(p=>drawPlayer(p.x,p.y,'#22c55e',p.l));
+  D.forEach(p=>drawPlayer(p.x,p.y,'#ef4444',p.l));
+  const names=(complexity==='very-simple')?['Pass & Cut'] : ['Give-and-Go','Backdoor','Horns','Floppy','Spain PnR'];
+  const name=choice(names);
+  playNameEl.textContent = `Basketball: ${name}`;
+  cueEl.textContent=cueByComplexity(complexity);
+  if(complexity==='very-simple'){
+    drawArrow(300,450,350,360,'#f59e0b',true); // pass
+    drawArrow(300,450,300,380,'#60a5fa'); // cut
+  } else {
+    drawArrow(300,450,350,360,'#f59e0b',true);
+    drawArrow(300,450,300,360,'#60a5fa');
+    drawArrow(350,360,380,420,'#60a5fa');
+    drawArrow(650,360,600,450,'#60a5fa',true);
+  }
+}
+
+function genSoccer(age,complexity){
+  clearBoard();
+  const O=[{x:250,y:480,l:'LW'},{x:500,y:520,l:'ST'},{x:750,y:480,l:'RW'},{x:380,y:420,l:'CM'},{x:620,y:420,l:'CM'}];
+  const D=[{x:250,y:260,l:'LB'},{x:500,y:240,l:'CB'},{x:750,y:260,l:'RB'}];
+  O.forEach(p=>drawPlayer(p.x,p.y,'#22c55e',p.l));
+  D.forEach(p=>drawPlayer(p.x,p.y,'#ef4444',p.l));
+  const names=(complexity==='very-simple')?['Dribble & Pass'] : ['Overlap Right','Through-Ball Central','Switch of Play','Give-and-Go Wide'];
+  const name=choice(names);
+  playNameEl.textContent=`Soccer: ${name}`;
+  cueEl.textContent=cueByComplexity(complexity);
+  if(complexity==='very-simple'){
+    drawArrow(500,520,560,500,'#60a5fa'); // short dribble
+    drawArrow(560,500,620,480,'#f59e0b',true); // pass
+  } else {
+    drawArrow(620,420,720,460,'#60a5fa');
+    drawArrow(750,480,800,430,'#60a5fa');
+    drawArrow(500,520,720,500,'#f59e0b',true);
+    drawArrow(380,420,500,520,'#60a5fa',true);
+  }
+}
+
+function hydrateSidebar(sport,age){
+  const q=choice(QUOTES);
+  quoteEl.textContent = q.text;
+  quoteAuthorEl.textContent = "— " + q.author;
+  tipsEl.innerHTML = '';
+  const ageTips = TIPS[age] || ["Keep it fun.", "Short, simple instructions.", "Lots of reps, low lines."];
+  ageTips.forEach(t=>{
+    const li=document.createElement('li'); li.textContent=t; tipsEl.appendChild(li);
+  });
+  practicePlanEl.innerHTML='';
+  (PRACTICE_BLOCKS[sport]||[]).forEach(step=>{
+    const li=document.createElement('li'); li.textContent=step; practicePlanEl.appendChild(li);
+  });
+}
+
+function generate(){
+  const sport=document.getElementById('sport').value;
+  const age=document.getElementById('age').value;
+  const complexity=document.getElementById('complexity').value;
+  if(sport==='football') genFootball(age,complexity);
+  if(sport==='basketball') genBasketball(age,complexity);
+  if(sport==='soccer') genSoccer(age,complexity);
+  hydrateSidebar(sport,age);
+}
+
+// Buttons
+document.getElementById('generate').addEventListener('click', generate);
+document.getElementById('downloadPng').addEventListener('click', ()=>{
+  const link=document.createElement('a');
+  link.download = (document.getElementById('playName').textContent||'play') + '.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+});
+
+// initial
+generate();// Simple procedural play generators and UI glue
+function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+function choice(a){return a[randInt(0,a.length-1)];}
+
+const canvas = document.getElementById('board');
+const ctx = canvas.getContext('2d');
+const playNameEl = document.getElementById('playName');
+const cueEl = document.getElementById('coachingCue');
+const quoteEl = document.getElementById('quote');
+const quoteAuthorEl = document.getElementById('quoteAuthor');
+const tipsEl = document.getElementById('tips');
+const practicePlanEl = document.getElementById('practicePlan');
+
+function clearBoard() {
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(0,0,canvas.width, canvas.height);
+  // Field/Court markings simplified
+  ctx.strokeStyle = '#1f2937';
+  ctx.lineWidth = 2;
+  for (let i=50;i<canvas.width;i+=100){
+    ctx.beginPath(); ctx.moveTo(i,20); ctx.lineTo(i,580); ctx.stroke();
+  }
+  ctx.beginPath(); ctx.moveTo(20,50); ctx.lineTo(980,50); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(20,550); ctx.lineTo(980,550); ctx.stroke();
+}
+
+function drawPlayer(x,y,color,label){
+  ctx.fillStyle=color;
+  ctx.beginPath(); ctx.arc(x,y,10,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#e2e8f0';
+  ctx.font='12px system-ui';
+  ctx.fillText(label, x-8, y-14);
+}
+
+function drawArrow(x1,y1,x2,y2,color,dashed=false){
+  ctx.strokeStyle=color; ctx.lineWidth=3;
+  if(dashed){ctx.setLineDash([8,6]);} else {ctx.setLineDash([]);}
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  // arrow head
+  const angle = Math.atan2(y2-y1,x2-x1);
+  const len = 10;
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-len*Math.cos(angle-Math.PI/6), y2-len*Math.sin(angle-Math.PI/6));
+  ctx.lineTo(x2-len*Math.cos(angle+Math.PI/6), y2-len*Math.sin(angle+Math.PI/6));
+  ctx.closePath(); ctx.fillStyle=color; ctx.fill();
+  ctx.setLineDash([]);
+}
+
+// Generators
+function genFootball(age,complexity){
+  clearBoard();
+  const baseY = 450; // offense lower
+  const offense = [
+    {x:350,y:baseY,label:'WRL'},{x:500,y:baseY,label:'QB'},{x:650,y:baseY,label:'WRR'},{x:500,y:500,label:'RB'}
+  ];
+  const defense = [
+    {x:350,y:200,label:'CBL'},{x:500,y:200,label:'S'},{x:650,y:200,label:'CBR'}
+  ];
+  offense.forEach(p=>drawPlayer(p.x,p.y,'#22c55e',p.label));
+  defense.forEach(p=>drawPlayer(p.x,p.y,'#ef4444',p.label));
+
+  const names = ['Jet Sweep','Double Slant','Flood Right','Center Drag','Quick Out','Trips Left'];
+  const name = choice(names);
+  playNameEl.textContent = `Flag: ${name}`;
+  const cues = {
+    'simple':'One hard cut, eyes up, quick throw.',
+    'standard':'Sell the route stem; QB hits first window.',
+    'advanced':'Attack leverage; throw on time before the break.'
+  };
+  cueEl.textContent = cues[complexity];
+
+  // routes
+  // WRL: slant or go
+  const wrLeftEnd = (name==='Double Slant'||name==='Center Drag') ? {x:420,y:350} : {x:350,y:250};
+  drawArrow(350,baseY, wrLeftEnd.x, wrLeftEnd.y, '#60a5fa');
+  // WRR: out or corner
+  const wrRightEnd = (name==='Quick Out'||name==='Flood Right') ? {x:720,y:360} : {x:700,y:270};
+  drawArrow(650,baseY, wrRightEnd.x, wrRightEnd.y, '#60a5fa');
+  // RB: swing or block then release
+  const rbEnd = (name==='Flood Right') ? {x:560,y:420} : {x:440,y:420};
+  drawArrow(500,500, rbEnd.x, rbEnd.y, '#60a5fa', true);
+  // QB pass line
+  drawArrow(500,baseY, wrLeftEnd.x, wrLeftEnd.y, '#f59e0b', true);
+}
+
+function genBasketball(age,complexity){
+  clearBoard();
+  // offense spots
+  const O=[{x:300,y:450,l:'1'},{x:450,y:520,l:'2'},{x:600,y:450,l:'3'},{x:350,y:360,l:'4'},{x:650,y:360,l:'5'}];
+  const D=[{x:300,y:300,l:'x1'},{x:450,y:360,l:'x2'},{x:600,y:300,l:'x3'},{x:350,y:260,l:'x4'},{x:650,y:260,l:'x5'}];
+  O.forEach(p=>drawPlayer(p.x,p.y,'#22c55e',p.l));
+  D.forEach(p=>drawPlayer(p.x,p.y,'#ef4444',p.l));
+  const names=['Give-and-Go','Backdoor','Horns','Floppy','Spain PnR'];
+  const name=choice(names);
+  playNameEl.textContent = `Basketball: ${name}`;
+  const cues={
+    'simple':'Pass & cut hard. Eyes on ball, hands ready.',
+    'standard':'Read defender’s hips; backdoor if overplayed.',
+    'advanced':'Set angles on screens; hit short roll window.'
+  };
+  cueEl.textContent=cues[complexity];
+  // simple patterns
+  // 1 passes to 4 at elbow then cuts
+  drawArrow(300,450,350,360,'#f59e0b',true);
+  drawArrow(300,450,300,360,'#60a5fa');
+  // 4 dribble handoff to 1
+  drawArrow(350,360,380,420,'#60a5fa');
+  // weakside screen 5 to 3
+  drawArrow(650,360,600,450,'#60a5fa',true);
+}
+
+function genSoccer(age,complexity){
+  clearBoard();
+  const O=[{x:250,y:480,l:'LW'},{x:500,y:520,l:'ST'},{x:750,y:480,l:'RW'},{x:380,y:420,l:'CM'},{x:620,y:420,l:'CM'}];
+  const D=[{x:250,y:260,l:'LB'},{x:500,y:240,l:'CB'},{x:750,y:260,l:'RB'}];
+  O.forEach(p=>drawPlayer(p.x,p.y,'#22c55e',p.l));
+  D.forEach(p=>drawPlayer(p.x,p.y,'#ef4444',p.l));
+  const names=['Overlap Right','Through-Ball Central','Switch of Play','Give-and-Go Wide'];
+  const name=choice(names);
+  playNameEl.textContent=`Soccer: ${name}`;
+  const cues={
+    'simple':'Two-touch rule; face the field.',
+    'standard':'Play into space; communicate early.',
+    'advanced':'Third-man runs; arrive, don’t drift.'
+  };
+  cueEl.textContent=cues[complexity];
+  // pattern lines
+  drawArrow(620,420,720,460,'#60a5fa'); // CM to RW
+  drawArrow(750,480,800,430,'#60a5fa'); // RW forward
+  drawArrow(500,520,720,500,'#f59e0b',true); // ST run/pass
+  drawArrow(380,420,500,520,'#60a5fa',true); // CM support
+}
+
+function hydrateSidebar(sport,age){
+  // quote
+  const q=choice(QUOTES);
+  quoteEl.textContent = q.text;
+  quoteAuthorEl.textContent = "— " + q.author;
+  // tips
+  tipsEl.innerHTML = '';
+  TIPS[age].forEach(t=>{
+    const li=document.createElement('li'); li.textContent=t; tipsEl.appendChild(li);
+  });
+  // practice plan
+  practicePlanEl.innerHTML='';
+  PRACTICE_BLOCKS[sport].forEach(step=>{
+    const li=document.createElement('li'); li.textContent=step; practicePlanEl.appendChild(li);
+  });
+}
+
+function generate(){
+  const sport=document.getElementById('sport').value;
+  const age=document.getElementById('age').value;
+  const complexity=document.getElementById('complexity').value;
+  if(sport==='football') genFootball(age,complexity);
+  if(sport==='basketball') genBasketball(age,complexity);
+  if(sport==='soccer') genSoccer(age,complexity);
+  hydrateSidebar(sport,age);
+}
+
+document.getElementById('generate').addEventListener('click', generate);
+document.getElementById('downloadPng').addEventListener('click', ()=>{
+  const link=document.createElement('a');
+  link.download = (document.getElementById('playName').textContent||'play') + '.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+});
+
+// initial
+generate();// Replace these placeholders with your real checkout links.
+// Easiest path: create Stripe Payment Links for each product or use Lemon Squeezy/Gumroad buy links.
+const PAYMENT_LINKS = {
+  all: "https://pay.example.com/all-sports-50", // TODO: replace with real Payment Link
+  football: "https://pay.example.com/football-20",
+  basketball: "https://pay.example.com/basketball-20",
+  soccer: "https://pay.example.com/soccer-20",
+  baseball: "https://pay.example.com/baseball-20",
+  volleyball: "https://pay.example.com/volleyball-20",
+  hockey: "https://pay.example.com/hockey-20"
+};
+
+// Attach click handlers to pricing buttons
+function wireButtons(){
+  document.querySelectorAll('[data-product]').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      const product = e.currentTarget.getAttribute('data-product');
+      // Redirect to hosted checkout link
+      const url = PAYMENT_LINKS[product];
+      if(!url || url.includes('example.com')){
+        alert('Payment link not set yet. Replace links in paylinks.js');
+        return;
+      }
+      window.location.href = url;
+    });
+  });
+}
+document.addEventListener('DOMContentLoaded', wireButtons);
+
+
